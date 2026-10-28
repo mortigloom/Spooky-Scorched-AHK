@@ -1,0 +1,56 @@
+name: Build Windows EXE
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install build tools
+        run: python -m pip install lief==1.0.0 pefile==2024.8.26
+      - name: Fetch official AutoHotkey runtime and check archive
+        run: |
+          curl --fail --location --retry 2 https://www.autohotkey.com/download/ahk-v2.zip --output ahk-runtime.zip
+          echo "ca1a595aca4528755d8d4cd7fed23d497a37bd9a0b6892072612d68dee1bd00a  ahk-runtime.zip" | sha256sum --check
+          python -c "import zipfile; zipfile.ZipFile('ahk-runtime.zip').extract('AutoHotkey64.exe')"
+      - name: Build self-contained EXE
+        run: python build.py
+      - name: Validate PE and embedded script
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import pefile
+          pe = pefile.PE('SpookyScorchedChat.exe')
+          assert pe.FILE_HEADER.Machine == 0x8664
+          rcdata = next(e for e in pe.DIRECTORY_ENTRY_RESOURCE.entries if e.id == 10)
+          script = next(e for e in rcdata.directory.entries if e.id == 1).directory.entries[0].data.struct
+          expected = b'\xef\xbb\xbf' + Path('SpookyScorchedChat.ahk').read_bytes()
+          assert pe.get_data(script.OffsetToData, script.Size) == expected
+          print('Validated x64 PE and exact embedded script.')
+          PY
+          sha256sum SpookyScorchedChat.exe > SHA256SUMS.txt
+      - name: Package source and EXE
+        run: |
+          zip SpookyScorchedChat.zip SpookyScorchedChat.exe SpookyScorchedChat.ahk build.py README.md license.txt SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SpookyScorchedChat
+          path: |
+            SpookyScorchedChat.exe
+            SpookyScorchedChat.zip
+            SHA256SUMS.txt
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v1.0.${{ github.run_number }}" SpookyScorchedChat.exe SpookyScorchedChat.zip SHA256SUMS.txt --title "Spooky Scorched Chat v1.0.${{ github.run_number }}" --notes "Standalone Windows x64 macro with AutoHotkey embedded. Starts paused. F1 toggles run/pause/resume. E and Space use 50 ms down/up holds and 600 ms waits. Windows and in-game execution have not been tested in this build environment."
