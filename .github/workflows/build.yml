@@ -20,7 +20,7 @@ jobs:
         run: python -m pip install lief==1.0.0 pefile==2024.8.26
       - name: Fetch official AutoHotkey runtime and check archive
         run: |
-          curl --fail --location --retry 2 https://www.autohotkey.com/download/ahk-v2.zip --output ahk-runtime.zip
+          curl --fail --location --retry 2 https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.31/AutoHotkey_2.0.31.zip --output ahk-runtime.zip
           echo "ca1a595aca4528755d8d4cd7fed23d497a37bd9a0b6892072612d68dee1bd00a  ahk-runtime.zip" | sha256sum --check
           python -c "import zipfile; zipfile.ZipFile('ahk-runtime.zip').extract('AutoHotkey64.exe')"
       - name: Build self-contained EXE
