@@ -17,9 +17,9 @@ Pausing preserves the next key and remaining wait. A press already underway comp
 
 ## Build
 
-Install Python and LIEF 1.0.0 (`python -m pip install lief==1.0.0`). Download the official AutoHotkey v2 ZIP from https://www.autohotkey.com/download/ahk-v2.zip and extract AutoHotkey64.exe next to build.py. Run `python build.py`.
+Install Python and LIEF 1.0.0 (`python -m pip install lief==1.0.0`). Download the official AutoHotkey v2 ZIP from https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.31/AutoHotkey_2.0.31.zip and extract AutoHotkey64.exe next to build.py. Run `python build.py`.
 
-The build embeds the script as Win32 RCDATA resource ID 1 in the official interpreter, producing a self-contained Windows x64 EXE. The GitHub Actions workflow verifies the downloaded runtime archive against its recorded SHA-256, validates the embedded script, and publishes an EXE and source ZIP. A future runtime download change requires updating that checksum after verification.
+The build embeds the script as Win32 RCDATA resource ID 1 in the official interpreter, producing a self-contained Windows x64 EXE. The GitHub Actions workflow verifies the downloaded runtime archive against its recorded SHA-256, validates the embedded script, and publishes an EXE and source ZIP. Updating the runtime version requires updating its URL and checksum after verification.
 
 ## Validation
 
